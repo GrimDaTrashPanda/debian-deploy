@@ -15,7 +15,7 @@ Companion repo for Arch-based systems: [endeavouros-deploy](https://github.com/G
 
 ```bash
 git clone https://github.com/GrimDaTrashPanda/debian-deploy.git
-cd <your-repo>
+cd debian-deploy
 chmod +x deploy.sh
 ./deploy.sh
 ```

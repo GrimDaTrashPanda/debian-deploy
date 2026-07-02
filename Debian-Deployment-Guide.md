@@ -22,7 +22,7 @@
 
 This document is the companion reference to [`deploy.sh`](./deploy.sh) — it explains *why* each step exists, not just what command to run. If you just want to run the script, see the [README](./README.md). This guide is for understanding what's happening under the hood, or for doing any of it manually.
 
-This is the Debian sibling to the [EndeavourOS deployment guide](https://github.com/GrimDaTrashPanda/endeavouros-deploy) — same end goal, genuinely different mechanics. Debian has no AUR, no `.pacnew` system, and its stable repos lag behind Arch's rolling model, so a few tools need to be fetched directly rather than installed through the package manager.
+Debian's stable repos are curated and heavily tested, which means they lag upstream releases — sometimes by months or years. A couple of common tools aren't packaged there at all, so this guide fetches those directly rather than through the package manager.
 
 **This guide covers:**
 
@@ -30,7 +30,7 @@ This is the Debian sibling to the [EndeavourOS deployment guide](https://github.
 |---|---|
 | Debian installation (GNOME, stable branch) | Dual-boot or multi-partition layouts |
 | Wayland input optimisation for all browser engines | NVIDIA proprietary driver setup |
-| Multi-method browser provisioning (no AUR equivalent) | Gaming / Steam configuration |
+| Multi-method browser provisioning | Gaming / Steam configuration |
 | Tools missing from Debian stable, fetched directly | Server / headless deployments |
 | Split-phase update workflow | Debian Testing/Sid (this guide assumes stable) |
 
@@ -40,21 +40,21 @@ This is the Debian sibling to the [EndeavourOS deployment guide](https://github.
 
 ## 2. Phase 1: Installation
 
-Unlike EndeavourOS, Debian's installer (`debian-installer` or the graphical Calamares-based live image, depending on which ISO you choose) doesn't have a known mirror-stall bug at a specific percentage. Mirror selection still matters for download speed, but it doesn't have the same failure mode worth specifically engineering around.
+Debian's installer (`debian-installer` or the graphical Calamares-based live image, depending on which ISO you choose) is generally reliable. Mirror selection still matters for download speed, but there's no specific failure mode here worth engineering around — pick a nearby mirror and proceed.
 
 ### 1.1 Choosing an Installer Image
 
-Debian offers multiple ISO types. For a desktop GNOME machine, the **live image with GNOME** is the simplest path — it lets you test the desktop environment before committing to install, similar in spirit to how Arch live media works, though Debian's live environment is less commonly used for system administration tasks before installing.
+Debian offers multiple ISO types. For a desktop GNOME machine, the **live image with GNOME** is the simplest path — it lets you test the desktop environment before committing to install.
 
 ### 1.2 Running the Installer
 
 1. Boot from the live media.
 2. If using the live-GNOME image: test the desktop, then launch the installer from the desktop. If using the standard netinst image: the installer runs directly, text-based.
 3. Select your language, location, and keyboard layout.
-4. **Partitioning:** Debian's installer supports LVM with encryption (LUKS) through the guided partitioning options — select **Guided - use entire disk and set up encrypted LVM** if you want the same disk-encryption posture as the EndeavourOS deployment.
+4. **Partitioning:** Debian's installer supports LVM with encryption (LUKS) through the guided partitioning options — select **Guided - use entire disk and set up encrypted LVM** for full disk encryption.
 5. Set up your user account and password.
 6. **Software selection:** when prompted for desktop environment, select **GNOME**. Deselect other desktop environments if presented as a list, to avoid installing multiple DEs you won't use.
-7. Confirm and let the installer run. This will take noticeably longer than an Arch-based install — Debian's installer pulls a more complete base system by default.
+7. Confirm and let the installer run. Debian pulls a fairly complete base system by default, so this can take a while depending on your connection and media speed.
 
 > 📌 **Why LUKS + LVM here, not just LUKS?** Debian's guided partitioner bundles encryption with LVM (Logical Volume Manager) rather than offering plain LUKS-on-partition the way Calamares does. Functionally the security outcome is the same — full disk encryption — but the underlying disk layout is more flexible to resize later. No action needed beyond selecting the right guided option.
 
@@ -74,21 +74,21 @@ You should see `main`, `contrib`, `non-free-firmware` (or just `main contrib non
 
 ## 3. Phase 2: Wayland Input Configuration
 
-This phase is functionally identical to the EndeavourOS guide — Wayland is Wayland regardless of distro, and Firefox/Chromium handle it the same way on Debian as on Arch.
+Wayland input tuning here is entirely engine-based (Mozilla vs. Chromium), not distro-specific — the steps below apply regardless of which Linux distribution you're on.
 
 ### 2.1 Mozilla Engine — Firefox
 
-Debian's repo package is `firefox-esr` (Extended Support Release), not the bleeding-edge `firefox` package you'd get on Arch. This is intentional on Debian's part — ESR tracks a more conservative release cadence that matches Debian's overall stability philosophy. Functionally, for Wayland purposes, it behaves the same:
+Debian's repo package is `firefox-esr` (Extended Support Release), which tracks a conservative release cadence in line with Debian's overall stability philosophy. For Wayland purposes, it behaves the same as any other Firefox build:
 
 ```bash
 echo "MOZ_ENABLE_WAYLAND=1" | sudo tee -a /etc/environment
 ```
 
-**What this does:** Identical mechanism to Arch — appends one line to `/etc/environment`, applied at next login.
+**What this does:** Appends one line to `/etc/environment`, applied at next login.
 
 ### 2.2 Chromium Engine — Chrome, Brave, Edge
 
-Identical flag-based configuration to the Arch guide. The browsers themselves are installed differently on Debian (see Phase 3.5), but once installed, the Wayland tuning step is the same:
+All three Chromium-based browsers use the same flag-based configuration. They're installed through different mechanisms on Debian (see Phase 3.5), but once installed, the Wayland tuning step is identical across all of them:
 
 | Browser | Address to paste |
 |---|---|
@@ -96,13 +96,13 @@ Identical flag-based configuration to the Arch guide. The browsers themselves ar
 | Brave | `brave://flags/#ozone-platform-hint` |
 | Microsoft Edge | `edge://flags/#ozone-platform-hint` |
 
-Set each to **Wayland**, click **Relaunch**. One-time per browser, same as Arch.
+Set each to **Wayland**, click **Relaunch**. This is a one-time step per browser.
 
 ---
 
 ## 4. Phase 3: Software Provisioning
 
-This is where Debian and Arch diverge the most. There's no AUR, no unified helper like `yay`, and Debian's stable repos move slowly enough that a couple of common tools simply aren't packaged there at all.
+Debian has no single unified tool for installing "everything," and its stable repos move slowly enough that a couple of common tools simply aren't packaged there at all. This phase walks through each of the mechanisms this deployment relies on.
 
 ### 3.1 Understanding the Debian Package Landscape
 
@@ -111,9 +111,9 @@ This is where Debian and Arch diverge the most. There's no AUR, no unified helpe
 | **Debian Stable repos** (`apt`) | Curated, heavily-tested packages. Very stable, but can lag months to years behind upstream releases. |
 | **Third-party apt repos** | Vendor-maintained sources added manually (e.g. Brave, Microsoft Edge) — each comes with its own signing key and `sources.list.d` entry. |
 | **Direct `.deb` downloads** | Some software (Chrome, and tools like `fastfetch`/`duf` that don't maintain a repo) is installed by downloading a `.deb` file directly and installing it with `apt install ./package.deb`. |
-| **Flatpak** | Same as Arch — sandboxed, distribution-agnostic. |
+| **Flatpak** | Sandboxed, distribution-agnostic app runtime. |
 
-> ⚠️ **There is no AUR equivalent.** This is the single biggest structural difference from the Arch guide. On Arch, "foreign software" is cleanly separated into one bucket (AUR) that a single helper manages. On Debian, "foreign software" is scattered: direct `.deb` files, vendor apt repos, and Flatpak are all distinct mechanisms with no unifying layer. The deploy script handles each one explicitly because there's no shortcut around this.
+> ⚠️ **There's no single unified layer for "foreign software" on Debian.** It's scattered across direct `.deb` files, vendor apt repos, and Flatpak — three distinct mechanisms with no single helper tool managing all of them. The deploy script handles each one explicitly because there's no shortcut around this.
 
 ### 3.2 Native Toolkit — Standard Loadout
 
@@ -137,7 +137,7 @@ sudo apt install -y \
 
 | Package | What it's for |
 |---|---|
-| `build-essential` | Compiler toolchain — Debian's equivalent of Arch's `base-devel`. |
+| `build-essential` | Compiler toolchain and core build tools. |
 | `git` | Version control, needed for some later steps. |
 | `curl` / `wget` / `gnupg` | Needed to fetch and verify the direct-download tools and third-party repo keys in the next sections. |
 | `firefox-esr` | Debian's standard Firefox package — see note in 2.1. |
@@ -147,7 +147,7 @@ sudo apt install -y \
 | `glances` | Terminal system monitor. |
 | `flatpak` | Sandboxed app runtime. |
 
-> 📌 **Notice what's missing here.** `fastfetch`, `duf`, and `tldr` from the Arch loadout aren't in this list — see 3.3 and 3.4 for why, and what to do about each.
+> 📌 **Notice what's missing here.** `fastfetch`, `duf`, and `tldr` aren't in this list — see 3.3 and 3.4 for why, and what to do about each.
 
 ### 3.3 Tools Missing From Debian Stable — Fetched Directly
 
@@ -173,7 +173,7 @@ sudo apt install -y /tmp/duf.deb
 
 ### 3.4 tldr — Optional, Your Call
 
-Debian's apt package for `tldr` is named `node-tldr`, and it pulls in Node.js as a dependency just to run a small command-line tool — a meaningfully heavier dependency footprint than the same tool on Arch. Two options, neither installed by default:
+Debian's apt package for `tldr` is named `node-tldr`, and it pulls in Node.js as a dependency just to run a small command-line tool — a fairly heavy dependency footprint for what it does. Two options, neither installed by default:
 
 ```bash
 # Option A: apt, accepts the Node.js dependency
@@ -187,7 +187,7 @@ This guide doesn't pick one for you — it's left out of the default loadout spe
 
 ### 3.5 Browser Stack
 
-Three browsers, three different install mechanisms — this is the most concrete illustration of "no unified AUR-style layer."
+Three browsers, three different install mechanisms — this is the most concrete illustration of Debian having no single unified way to install third-party software.
 
 **Google Chrome — direct `.deb`, no repo:**
 
@@ -226,17 +226,17 @@ sudo apt install -y microsoft-edge-stable
 
 ## 5. Phase 4: Split-Phase Update Workflow
 
-The Arch version splits "official repos" from "AUR/Flatpak" cleanly, because `pacman -Qmq` can tell you exactly which packages came from outside the official repos. Debian has no equivalent query — once a third-party repo (Brave, Edge) is added via `sources.list.d`, apt treats it exactly like any other trusted repo. There's no "show me only the third-party stuff" command.
+Debian has no built-in query for "show me only the third-party stuff" — once a third-party repo (Brave, Edge) is added via `sources.list.d`, apt treats it exactly like any other trusted repo, with no distinction in normal `apt` commands.
 
 ### 4.1 What the Split Actually Means Here
 
-| | EndeavourOS / Arch | Debian (this guide) |
-|---|---|---|
-| What "Update Core" does | Official repos only, explicitly excludes AUR | All apt-tracked packages — official Debian + Brave + Edge, since apt can't distinguish them |
-| What "Update Apps" does | Flatpak + AUR | Flatpak only |
-| Is the split meaningful? | Yes — genuinely isolates two different trust/stability tiers | Mostly cosmetic — kept for muscle-memory consistency across your fleet, not because it does real isolation |
+| | Detail |
+|---|---|
+| What "Update Core" does | All apt-tracked packages — official Debian repos plus Brave and Edge, since apt can't distinguish them once added |
+| What "Update Apps" does | Flatpak only |
+| Is the split meaningful? | Mostly cosmetic on Debian — kept as two separate launchers for a consistent update habit, not because it achieves real isolation between trust tiers |
 
-If you want true isolation between "Debian's own packages" and "third-party repos I added," that would require pinning or apt preferences configuration — meaningfully more complex than this guide's scope, and probably not worth the overhead for a handful of browser packages.
+If you want true isolation between Debian's own packages and third-party repos you've added, that would require pinning or apt preferences configuration — meaningfully more complex than this guide's scope, and probably not worth the overhead for a handful of browser packages.
 
 ### 4.2 The Update Scripts
 
@@ -276,21 +276,21 @@ EOF
 chmod +x ~/.local/bin/update-core.sh ~/.local/bin/update-apps.sh
 ```
 
-GNOME launcher creation follows the same pattern as the Arch guide — terminal-emulator detection, then `.desktop` file generation. See `deploy.sh` for the exact implementation; it's mechanically identical to the Arch version, just pointed at these two scripts.
+GNOME launcher creation follows a simple pattern: detect the available terminal emulator, then generate a `.desktop` file pointed at the relevant script. See `deploy.sh` for the exact implementation.
 
 ### 4.3 Why `apt autoremove` Is a Dry-Run, Not Automatic
 
-Unlike the Arch script, which runs `pacman -Rns` somewhat freely on confirmed orphans, the Debian update-core script deliberately stops at `--dry-run` for `autoremove` and asks you to run it manually. Apt's dependency graph on Debian sometimes flags packages as removable that you'd actually want to keep — false positives are more common here than with `pacman -Qdtq`. Worth eyeballing the list before clearing it, every time.
+The update-core script deliberately stops at `--dry-run` for `autoremove` and asks you to run it manually, rather than clearing orphans automatically. Apt's dependency graph sometimes flags packages as removable that you'd actually want to keep, so it's worth eyeballing the list before clearing it, every time.
 
 ---
 
 ## 6. Phase 5: Ongoing Maintenance Reference
 
-### 5.1 No `.pacnew` Equivalent — How Debian Handles Config Conflicts Instead
+### 5.1 How Debian Handles Config File Conflicts
 
-Arch's `.pacnew` system saves a new config file alongside your modified one and lets you merge later, on your own schedule. Debian's `apt` takes a different approach entirely: when a package update would overwrite a config file you've modified, **apt stops and asks you interactively, during the upgrade itself** — usually presenting a menu like "keep your version / install the package's version / show a diff."
+When a package update would overwrite a config file you've modified, **apt stops and asks you interactively, during the upgrade itself** — usually presenting a menu like "keep your version / install the package's version / show a diff."
 
-This means config conflicts on Debian surface immediately during `sudo apt upgrade`, not as a follow-up list to review later. There's nothing to "check for" after the fact the way you'd `find /etc -name "*.pacnew"` on Arch — if nothing prompted you during the upgrade, nothing conflicted.
+This means config conflicts on Debian surface immediately during `sudo apt upgrade`, not as a follow-up list to review later. There's nothing to check for after the fact — if nothing prompted you during the upgrade, nothing conflicted.
 
 ### 5.2 Updating the Directly-Fetched Tools
 
@@ -305,7 +305,7 @@ Compare against the latest releases on their GitHub pages, and re-run the releva
 
 ### 5.3 Checking What's Actually Installed From Third-Party Sources
 
-There's no single command equivalent to Arch's `pacman -Qm`, but you can list configured non-Debian apt sources directly:
+You can list configured non-Debian apt sources directly:
 
 ```bash
 ls /etc/apt/sources.list.d/
@@ -320,7 +320,7 @@ sudo apt remove --purge <package>
 sudo apt autoremove
 ```
 
-`--purge` also removes config files, which `apt remove` alone leaves behind — closer in spirit to Arch's `pacman -Rns`.
+`--purge` also removes config files, which `apt remove` alone leaves behind.
 
 ---
 
@@ -360,7 +360,7 @@ ls -la /usr/share/keyrings/
 
 ### A.4 Browser Scrolling Still Feels Wrong After Phase 2
 
-Same fix as the Arch guide: verify the flag was saved, log out and back in, and as a last resort add `--ozone-platform=wayland` directly to the browser's `.desktop` file `Exec=` line.
+Verify the flag was saved, log out and back in, and as a last resort add `--ozone-platform=wayland` directly to the browser's `.desktop` file `Exec=` line.
 
 ### A.5 fastfetch or duf GitHub Fetch Returns Nothing
 

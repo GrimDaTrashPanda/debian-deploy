@@ -1,12 +1,10 @@
 # Debian Baseline Deployment
 
-A single, idempotent script that takes a fresh Debian install (GNOME) to the same functional baseline as the EndeavourOS deployment: native toolkit, browser stack, Wayland tuning, and a split-phase update workflow with GNOME launchers.
+A single, idempotent script that takes a fresh Debian install (GNOME) to a fully provisioned baseline: native toolkit, browser stack, Wayland tuning, and a split-phase update workflow with GNOME launchers.
 
 Full background and rationale: [Debian-Deployment-Guide.md](./Debian-Deployment-Guide.md)
 
-This is a **sibling project**, not a port. Debian has no AUR equivalent, no `.pacnew` system, and a couple of standard tools (`fastfetch`, `duf`) aren't in Debian's stable repos at all. The mechanics here are genuinely different even though the end result — a fully provisioned machine reachable via `git clone && ./deploy.sh` — is the same.
-
-Companion repo for Arch-based systems: [endeavouros-deploy](https://github.com/GrimDaTrashPanda/endeavouros-deploy)
+Debian has no unified "foreign package" layer, no automatic config-drift tracking, and a couple of standard tools (`fastfetch`, `duf`) aren't in Debian's stable repos at all. This script handles each of those gaps explicitly.
 
 ## Prerequisites
 
@@ -30,25 +28,25 @@ Run as your normal user, not root — it calls `sudo` internally where needed.
 2. Installs the native toolkit: `firefox-esr`, telegram-desktop, shotcut, gimp, glances, flatpak, plus build tooling
 3. Fetches `fastfetch` and `duf` directly from their GitHub releases — neither is in Debian's stable repos
 4. Adds the Flathub remote
-5. Installs Chrome (direct .deb), Brave (official apt repo), and Edge (official apt repo) — each browser uses a different install mechanism since Debian has no unified AUR-style layer
+5. Installs Chrome (direct .deb), Brave (official apt repo), and Edge (official apt repo) — each browser uses a different install mechanism since Debian has no single package source that covers all three
 6. Sets `MOZ_ENABLE_WAYLAND=1` for native Firefox Wayland rendering
 7. Creates `update-core.sh` / `update-apps.sh` and matching GNOME launchers
 
-## Key differences from the EndeavourOS version
+## How package sources break down on Debian
 
-| | EndeavourOS / Arch | Debian |
-|---|---|---|
-| Foreign packages | AUR, isolated via `pacman -Qmq` | No equivalent — each browser repo is just another apt source |
-| fastfetch / duf | Official repos | Not packaged for stable — fetched as standalone `.deb` from GitHub |
-| tldr | Official repos | `node-tldr` (pulls in Node.js) or `pip install tldr` — not installed by default, your call |
-| Browser install | Single `yay -S` command, all three | Three separate mechanisms: direct `.deb` (Chrome), official apt repo + keyring (Brave, Edge) |
-| Update split logic | "Foreign" vs "official" via `pacman -Qmq` | Everything apt-tracked (including Brave/Edge once their repo is added) updates together — only Flatpak is genuinely separate |
-| Config drift tracking | `.pacnew` files | No Debian equivalent — apt handles config file conflicts interactively during `apt upgrade` instead |
+| | Detail |
+|---|---|
+| Official apt packages | Everything from Debian's own repos — the vast majority of the toolkit |
+| Third-party apt repos | Brave and Edge each add their own signed repo; once added, apt treats them exactly like official packages |
+| Direct `.deb` installs | Chrome ships no apt repo by default, so it's installed from a downloaded `.deb` |
+| GitHub-release binaries | `fastfetch` and `duf` aren't packaged for Debian stable at all, so they're fetched directly from their GitHub releases |
+| Flatpak | Sandboxed, distribution-agnostic apps via Flathub — kept fully separate from apt |
+| Config file conflicts | No separate tracking step needed — `apt upgrade` stops and asks interactively any time an update would overwrite a config file you've modified |
 
 ## After running
 
 - Log out and back in (applies the Wayland env var)
-- Set the Wayland flag manually in each Chromium browser — same `chrome://flags/#ozone-platform-hint` pattern as Arch
+- Set the Wayland flag manually in each Chromium browser via `chrome://flags/#ozone-platform-hint`
 - Press **Super**, search "Update" — confirm both launchers appear
 - If you want `tldr`: `sudo apt install node-tldr` or `pip install tldr`
 
@@ -58,4 +56,4 @@ Every install step checks for an existing binary or repo file before acting. Re-
 
 ## A note on the "split update" naming
 
-Unlike the Arch version, this split is mostly cosmetic — apt doesn't have a clean way to separate "trusted official" from "third-party repo" packages the way `pacman -Qmq` does for AUR. Once Brave or Edge's repo is added, `apt upgrade` updates them right alongside core Debian packages. The "Update Apps" launcher here really only covers Flatpak. It's kept as two launchers for muscle-memory consistency with the Arch machines, not because the underlying separation is as meaningful here.
+The split between "Update Core" and "Update Apps" is mostly cosmetic on Debian — apt doesn't have a clean way to separate "trusted official" from "third-party repo" packages. Once Brave or Edge's repo is added, `apt upgrade` updates them right alongside core Debian packages. The "Update Apps" launcher here really only covers Flatpak. It's kept as two separate launchers for a consistent update habit across machines, not because the underlying separation is deeply meaningful on Debian itself.

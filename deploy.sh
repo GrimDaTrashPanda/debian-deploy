@@ -4,9 +4,8 @@
 # https://github.com/<your-username>/<your-repo>
 #
 # Run this AFTER first boot into a fresh Debian install (GNOME desktop).
-# Equivalent in outcome to the EndeavourOS deployment script, but the
-# mechanics are genuinely different — Debian has no AUR equivalent, so
-# each non-repo browser gets its own official apt source added manually.
+# Debian has no single unified layer for third-party software, so each
+# non-repo browser gets its own official apt source added manually.
 #
 # Usage:
 #   chmod +x deploy.sh
@@ -163,8 +162,9 @@ flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.f
 echo ""
 
 # ── Phase 6: Browser stack ─────────────────────────────────────────────────
-# Debian has no AUR equivalent. Each browser is added as its own official
-# apt repository with its own signing key, then installed normally.
+# Debian has no single unified way to install third-party software. Each
+# browser is added as its own official apt repository with its own signing
+# key, then installed normally.
 
 info "Installing browser stack (Chrome, Brave, Edge)..."
 
@@ -250,7 +250,7 @@ echo "Press Enter to close..."
 read -r
 SCRIPT_EOF
 
-# --- Application layer updater (Flatpak only — no AUR equivalent exists) ---
+# --- Application layer updater (Flatpak only) ---
 cat << 'SCRIPT_EOF' > "$HOME/.local/bin/update-apps.sh"
 #!/usr/bin/env bash
 clear
@@ -262,11 +262,10 @@ if command -v flatpak &> /dev/null; then
     flatpak update -y
 fi
 echo ""
-echo "Note: there is no AUR equivalent on Debian. Browsers installed via"
-echo "third-party apt repos (Brave, Edge) are updated automatically by"
-echo "'Update System' above, since they're tracked by apt once their repo"
-echo "is added. Chrome's direct .deb install also self-updates via its own"
-echo "added apt source after first install."
+echo "Note: browsers installed via third-party apt repos (Brave, Edge) are"
+echo "updated automatically by 'Update System' above, since they're tracked"
+echo "by apt once their repo is added. Chrome's direct .deb install also"
+echo "self-updates via its own added apt source after first install."
 echo ""
 echo "Press Enter to close..."
 read -r

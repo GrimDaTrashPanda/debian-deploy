@@ -91,6 +91,8 @@ PACKAGES=(
   gimp
   glances
   flatpak
+  vlc
+  p7zip-full
 )
 
 if [ -n "$UCODE_PKG" ]; then

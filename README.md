@@ -25,7 +25,7 @@ Run as your normal user, not root — it calls `sudo` internally where needed.
 ## What it does
 
 1. Detects CPU vendor and installs the matching microcode package (`intel-microcode` / `amd64-microcode`)
-2. Installs the native toolkit: `firefox-esr`, telegram-desktop, shotcut, gimp, glances, flatpak, plus build tooling
+2. Installs the native toolkit: `firefox-esr`, telegram-desktop, shotcut, gimp, glances, flatpak, vlc, p7zip-full, plus build tooling
 3. Fetches `fastfetch` and `duf` directly from their GitHub releases — neither is in Debian's stable repos
 4. Adds the Flathub remote
 5. Installs Chrome (direct .deb), Brave (official apt repo), and Edge (official apt repo) — each browser uses a different install mechanism since Debian has no single package source that covers all three

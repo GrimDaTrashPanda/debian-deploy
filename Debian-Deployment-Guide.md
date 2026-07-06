@@ -132,7 +132,9 @@ sudo apt install -y \
   shotcut \
   gimp \
   glances \
-  flatpak
+  flatpak \
+  vlc \
+  p7zip-full
 ```
 
 | Package | What it's for |
@@ -146,6 +148,8 @@ sudo apt install -y \
 | `gimp` | Raster image editing. |
 | `glances` | Terminal system monitor. |
 | `flatpak` | Sandboxed app runtime. |
+| `vlc` | Media playback. |
+| `p7zip-full` | Archive extraction/creation, including `.7z`. |
 
 > 📌 **Notice what's missing here.** `fastfetch`, `duf`, and `tldr` aren't in this list — see 3.3 and 3.4 for why, and what to do about each.
 

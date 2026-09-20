@@ -55,3 +55,7 @@ Every install step checks for an existing binary or repo file before acting. Re-
 ## A note on the "split update" naming
 
 The split between "Update Core" and "Update Apps" is mostly cosmetic on Debian — apt doesn't have a clean way to separate "trusted official" from "third-party repo" packages. Once Brave or Edge's repo is added, `apt upgrade` updates them right alongside core Debian packages. The "Update Apps" launcher here really only covers Flatpak. It's kept as two separate launchers for a consistent update habit across machines, not because the underlying separation is deeply meaningful on Debian itself.
+
+## Changing the apps
+
+The app list isn't in this repo. It lives in [clone-panda-msi](https://github.com/GrimDaTrashPanda/clone-panda-msi). Edit `pkglist-flatpak.txt` there and every deploy repo picks it up on its next run.

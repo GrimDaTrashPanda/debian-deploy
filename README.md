@@ -1,6 +1,6 @@
 # Debian Baseline Deployment
 
-A single, idempotent script that takes a fresh Debian install (GNOME) to a fully provisioned baseline: native toolkit, browser stack, Wayland tuning, and a split-phase update workflow with GNOME launchers.
+A single, idempotent script that takes a fresh Debian install (GNOME) to a fully provisioned baseline: base tooling, the shared app loadout, Wayland tuning, and a split-phase update workflow with GNOME launchers.
 
 Full background and rationale: [Debian-Deployment-Guide.md](./Debian-Deployment-Guide.md)
 
@@ -25,10 +25,10 @@ Run as your normal user, not root — it calls `sudo` internally where needed.
 ## What it does
 
 1. Detects CPU vendor and installs the matching microcode package (`intel-microcode` / `amd64-microcode`)
-2. Installs the native toolkit: `firefox-esr`, telegram-desktop, shotcut, gimp, glances, flatpak, vlc, p7zip-full, plus build tooling
+2. Installs base tooling (firefox-esr, glances, flatpak, p7zip-full, build tools)
 3. Fetches `fastfetch` and `duf` directly from their GitHub releases — neither is in Debian's stable repos
 4. Adds the Flathub remote
-5. Installs Chrome (direct .deb), Brave (official apt repo), and Edge (official apt repo) — each browser uses a different install mechanism since Debian has no single package source that covers all three
+5. Installs the app loadout from clone-panda-msi (its Flathub list, plus Discord, Kdenlive, OBS, Meld, and Telegram as Flatpaks)
 6. Sets `MOZ_ENABLE_WAYLAND=1` for native Firefox Wayland rendering
 7. Creates `update-core.sh` / `update-apps.sh` and matching GNOME launchers
 
@@ -37,8 +37,6 @@ Run as your normal user, not root — it calls `sudo` internally where needed.
 | | Detail |
 |---|---|
 | Official apt packages | Everything from Debian's own repos — the vast majority of the toolkit |
-| Third-party apt repos | Brave and Edge each add their own signed repo; once added, apt treats them exactly like official packages |
-| Direct `.deb` installs | Chrome ships no apt repo by default, so it's installed from a downloaded `.deb` |
 | GitHub-release binaries | `fastfetch` and `duf` aren't packaged for Debian stable at all, so they're fetched directly from their GitHub releases |
 | Flatpak | Sandboxed, distribution-agnostic apps via Flathub — kept fully separate from apt |
 | Config file conflicts | No separate tracking step needed — `apt upgrade` stops and asks interactively any time an update would overwrite a config file you've modified |

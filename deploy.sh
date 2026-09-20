@@ -86,12 +86,8 @@ PACKAGES=(
   wget
   gnupg
   firefox-esr
-  telegram-desktop
-  shotcut
-  gimp
   glances
   flatpak
-  vlc
   p7zip-full
 )
 
@@ -163,50 +159,16 @@ flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.f
 
 echo ""
 
-# ── Phase 6: Browser stack ─────────────────────────────────────────────────
-# Debian has no single unified way to install third-party software. Each
-# browser is added as its own official apt repository with its own signing
-# key, then installed normally.
-
-info "Installing browser stack (Chrome, Brave, Edge)..."
-
-# --- Google Chrome ---
-if command -v google-chrome &> /dev/null; then
-  info "Google Chrome already installed, skipping."
+# ── Phase 6: App loadout (shared with clone-panda-msi) ───────────────────
+echo "==> Installing app loadout from clone-panda-msi..."
+command -v git &> /dev/null || sudo apt install -y git
+LOADOUT_DIR="$HOME/.local/share/clone-panda-msi"
+if [ -d "$LOADOUT_DIR/.git" ]; then
+  git -C "$LOADOUT_DIR" pull --ff-only
 else
-  info "Installing Google Chrome (direct .deb, no repo — matches Google's own instructions)..."
-  CHROME_DEB=$(mktemp --suffix=.deb)
-  curl -fsSL -o "$CHROME_DEB" "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
-  sudo apt install -y "$CHROME_DEB"
-  rm -f "$CHROME_DEB"
+  git clone https://github.com/GrimDaTrashPanda/clone-panda-msi.git "$LOADOUT_DIR"
 fi
-
-# --- Brave ---
-if command -v brave-browser &> /dev/null; then
-  info "Brave already installed, skipping."
-else
-  info "Adding Brave's official apt repository..."
-  sudo curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
-    https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-  echo "deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main" \
-    | sudo tee /etc/apt/sources.list.d/brave-browser-release.list > /dev/null
-  sudo apt update
-  sudo apt install -y brave-browser
-fi
-
-# --- Microsoft Edge ---
-if command -v microsoft-edge-stable &> /dev/null; then
-  info "Microsoft Edge already installed, skipping."
-else
-  info "Adding Microsoft's official apt repository..."
-  curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
-    | sudo gpg --dearmor -o /usr/share/keyrings/microsoft-edge-keyring.gpg
-  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge-keyring.gpg] https://packages.microsoft.com/repos/edge stable main" \
-    | sudo tee /etc/apt/sources.list.d/microsoft-edge.list > /dev/null
-  sudo apt update
-  sudo apt install -y microsoft-edge-stable
-fi
-
+bash "$LOADOUT_DIR/install-loadout.sh"
 echo ""
 
 # ── Phase 7: Wayland environment variable (Firefox/Mozilla engine) ───────

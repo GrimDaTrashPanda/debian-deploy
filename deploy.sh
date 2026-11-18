@@ -19,6 +19,7 @@ APT_PKGS=(
 
 FLATPAKS=(
   com.discordapp.Discord
+  io.github.kolunmi.Bazaar
   io.gitlab.librewolf-community
   org.localsend.localsend_app
   org.telegram.desktop

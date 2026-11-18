@@ -1,61 +1,16 @@
-# Debian Baseline Deployment
+# debian-deploy
 
-A single, idempotent script that takes a fresh Debian install (GNOME) to a fully provisioned baseline: base tooling, the shared app loadout, Wayland tuning, and a split-phase update workflow with GNOME launchers.
-
-Full background and rationale: [Debian-Deployment-Guide.md](./Debian-Deployment-Guide.md)
-
-Debian has no unified "foreign package" layer, no automatic config-drift tracking, and a couple of standard tools (`fastfetch`, `duf`) aren't in Debian's stable repos at all. This script handles each of those gaps explicitly.
-
-## Prerequisites
-
-- Debian already installed (GNOME desktop environment)
-- Your `/etc/apt/sources.list` includes the `non-free-firmware` component, needed for `intel-microcode`/`amd64-microcode`. Debian's installer includes this by default since Debian 12; if you're on an older release or a minimal netinst, you may need to add it manually.
+App loadout for a fresh Debian 13 (Trixie) desktop. Works on any desktop environment.
 
 ## Usage
 
-```bash
-git clone https://github.com/GrimDaTrashPanda/debian-deploy.git
-cd debian-deploy
-chmod +x deploy.sh
-./deploy.sh
-```
+Run as your normal user, not root:
 
-Run as your normal user, not root â€” it calls `sudo` internally where needed.
-
-## What it does
-
-1. Detects CPU vendor and installs the matching microcode package (`intel-microcode` / `amd64-microcode`)
-2. Installs base tooling (firefox-esr, glances, flatpak, p7zip-full, build tools)
-3. Fetches `fastfetch` and `duf` directly from their GitHub releases â€” neither is in Debian's stable repos
-4. Adds the Flathub remote
-5. Installs the app loadout from clone-panda-msi (its Flathub list, plus Discord, Kdenlive, OBS, Meld, and Telegram as Flatpaks)
-6. Sets `MOZ_ENABLE_WAYLAND=1` for native Firefox Wayland rendering
-7. Creates `update-core.sh` / `update-apps.sh` and matching GNOME launchers
-
-## How package sources break down on Debian
-
-| | Detail |
-|---|---|
-| Official apt packages | Everything from Debian's own repos â€” the vast majority of the toolkit |
-| GitHub-release binaries | `fastfetch` and `duf` aren't packaged for Debian stable at all, so they're fetched directly from their GitHub releases |
-| Flatpak | Sandboxed, distribution-agnostic apps via Flathub â€” kept fully separate from apt |
-| Config file conflicts | No separate tracking step needed â€” `apt upgrade` stops and asks interactively any time an update would overwrite a config file you've modified |
-
-## After running
-
-- Log out and back in (applies the Wayland env var)
-- Set the Wayland flag manually in each Chromium browser via `chrome://flags/#ozone-platform-hint`
-- Press **Super**, search "Update" â€” confirm both launchers appear
-- If you want `tldr`: `sudo apt install node-tldr` or `pip install tldr`
-
-## Safe to re-run
-
-Every install step checks for an existing binary or repo file before acting. Re-running won't duplicate repo entries or reinstall already-current packages.
-
-## A note on the "split update" naming
-
-The split between "Update Core" and "Update Apps" is mostly cosmetic on Debian â€” apt doesn't have a clean way to separate "trusted official" from "third-party repo" packages. Once Brave or Edge's repo is added, `apt upgrade` updates them right alongside core Debian packages. The "Update Apps" launcher here really only covers Flatpak. It's kept as two separate launchers for a consistent update habit across machines, not because the underlying separation is deeply meaningful on Debian itself.
-
-## Changing the apps
-
-The app list isn't in this repo. It lives in [clone-panda-msi](https://github.com/GrimDaTrashPanda/clone-panda-msi). Edit `pkglist-flatpak.txt` there and every deploy repo picks it up on its next run.
+    sudo apt install -y curl && bash <(curl -fsSLHÎ‹ËÜ˜]Ë™Ú]X\Ù\˜ÛÛ[˜ÛÛKÑÜš[QU˜\Ú[™KÙXšX[‹Y\ÞKÛXZ[‹Ù\ÞKœÚ
+B‚”ØY™HÈ™K\[‹‚‚ˆÈÈÚ]][œÝ[Â‚‹H
+Ê˜\ŠŠˆÚ›ÛZ][KXœ™[Ù™šXÙKY[›ËÙ[›]™KØœË\ÝY[Ë™›\YË˜Z[™›Ë˜\Ý™]ÚY‹Ú]Ý\›ÙÙ]›]ZÂ‹H
+Šœ˜]™IÜÈÙ™šXÚX[\™\ÎŠŠˆœ˜]™KXœ›ÝÜÙ\ˆ
+˜]]™K›È›]ZÈØ[™›ÞÚ[JB‹H
+Š‘›]ZÈ
+›]XŠNŠŠˆ\ØÛÜ™Xœ™UÛÛ‹ØØ[Ù[™[YÜ˜[B‚ˆÈÈ›Ý[˜ÛYY‚‘š]™\œÈ
+šYXKš\›]Ø\™JH[™Ýš[\ËˆÜÙH\™H\‹[XXÚ[™K‚
